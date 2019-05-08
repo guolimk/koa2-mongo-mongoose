@@ -13,7 +13,7 @@ const db = config.mongodb_url
  * @type {[type]}
  */
 mongoose.Promise = require('bluebird')
-mongoose.connect(db)
+mongoose.connect(db,{useMongoClient:true})
 
 /**
  * 获取数据库表对应的js对象所在的路径
