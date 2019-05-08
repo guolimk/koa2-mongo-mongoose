@@ -32,7 +32,7 @@ var formatReqLog = function (req, resTime) {
   if (method === 'GET') {
     logText += '<<<<<< request query:  ' + JSON.stringify(req.query) + '\n'
   } else {
-    logText += '<<<<<< request body: \n' + JSON.stringify(req.body) + '\n'
+    // logText += '<<<<<< request body: \n' + JSON.stringify(req.body) + '\n'
   }
 
   // 服务器响应时间
@@ -78,7 +78,7 @@ var formatRes = function (ctx, resTime) {
   var logText = new String()
 
   // 响应日志开始
-  logText += '\n *************** response log start *************** \n'
+  // logText += '\n *************** response log start *************** \n'
 
   // 添加请求日志
   logText += formatReqLog(ctx.request, resTime)
@@ -87,10 +87,10 @@ var formatRes = function (ctx, resTime) {
   // logText += 'response status: ' + ctx.status + '\n'
 
   // 响应内容
-  logText += '>>>>>> response body: \n' + JSON.stringify(ctx.body) + '\n'
+  logText += 'response:' + JSON.stringify(ctx.body) + '\n'
 
   // 响应日志结束
-  logText += '*************** response log end *************** \n'
+  // logText += '*************** response log end *************** \n'
 
   return logText
 
@@ -108,18 +108,18 @@ logUtil.logResponse = (ctx, resTime) => {
 var formatEvent = function (event, eTime) {
   var logText = new String()
   // 响应日志开始
-  logText += '\n *************** event log start *************** \n'
-  logText += 'Event: \n' + JSON.stringify(event) + '\n'
+  // logText += '\n *************** event log start *************** \n'
+  logText += 'event:' + JSON.stringify(event) + ''
   // 响应日志结束
-  logText += '*************** event log end *************** \n'
-  logText += 'event time: ' + eTime + '\n'
+  // logText += '*************** event log end *************** \n'
+  // logText += 'event time: ' + eTime + '\n'
   return logText
 }
 
 // 封装事件日志
-logUtil.logEvent = (ctx, eTime) => {
-  if (ctx) {
-    resLogger.info(formatEvent(ctx, eTime))
+logUtil.logEvent = (event, eTime) => {
+  if (event) {
+    resLogger.info(formatEvent(event, eTime))
   }
 }
 
@@ -127,19 +127,19 @@ logUtil.logEvent = (ctx, eTime) => {
 var formatEvents = function (events, eTime) {
   var logText = new String()
   // 响应日志开始
-  logText += '\n *************** event log start *************** \n'
-  logText += 'Event: \n' + JSON.stringify(events) + '\n'
+  // logText += '\n *************** event log start *************** \n'
+  logText += 'event:' + JSON.stringify(events) + ''
   // 响应日志结束
-  logText += '*************** event log end *************** \n'
+  // logText += '*************** event log end *************** \n'
     // 服务器响应时间
-  logText += 'events time: ' + eTime + '\n'
+  // logText += 'events time: ' + eTime + '\n'
   return logText
 }
 
 // 封装事件队列日志
-logUtil.logEvents = (ctx, eTime) => {
-  if (ctx) {
-    resLogger.info(formatEvents(ctx, eTime))
+logUtil.logEvents = (event, eTime) => {
+  if (event) {
+    resLogger.info(formatEvents(event, eTime))
   }
 }
 

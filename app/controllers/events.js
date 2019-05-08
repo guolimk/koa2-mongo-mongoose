@@ -6,6 +6,7 @@ const mongoose = require('mongoose')
 const events = mongoose.model('events')
 const ApiError = require('../../middlewares/ApiError')
 const ApiErrorNames = require('../../middlewares/ApiErrorName')
+const logUtil = require('../../utils/log_util')
 
 class eventsController {
   // 查询
@@ -13,7 +14,7 @@ class eventsController {
     const query = ctx.query
     const page = Number(query.page || 1)
     const pageSize = Number(query.pageSize || 10)
-    const { id } = query
+    const { id, mobile } = query
     let total, res
 
     if (id) {
@@ -21,6 +22,18 @@ class eventsController {
         .catch(err => ctx.throw(500, err))
 
       ctx.body = res
+    } else if(mobile) {
+      res = await events.find({mobile}, { _id: 0 })
+        .sort('-meta.updateAt')
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .exec()
+        .catch(err => ctx.throw(500, err))
+
+      ctx.body = {
+        total: res.length,
+        list: res
+      }
     } else {
       res = await events.find({}, { _id: 0 })
         .sort('-meta.updateAt')
@@ -30,11 +43,11 @@ class eventsController {
         .catch(err => ctx.throw(500, err))
 
       ctx.body = {
-        list: res,
-        total: total
+        total: res.length,
+        list: res
       }
-
     }
+
     next()
   }
 
@@ -108,16 +121,15 @@ class eventsController {
         jsfy: JSON.stringify(element)
       })
       item = await item.save()
-      eventArray.push({id, e, xt, os_version, os, av, trackId, xmi, partner, origin, appVersion, identity, sourceId, userFlag, mobile});
+      eventArray.push({xmi, trackId, e, xt, os_version, os, av, partner, origin, appVersion, identity, sourceId, userFlag, mobile});
+      logUtil.logEvent({e, xt, os, av, sourceId, appVersion, origin, mobile});
     }
-
     // list.forEach(async element  =>  {
     // });
     // console.log('Response:', JSON.stringify(eventArray))
     ctx.body = {
       success: true,
       count: eventArray.length,
-      eventArray: eventArray
     }
   }
 
