@@ -21,8 +21,6 @@ class i18nController {
 
       ctx.body = res
     } else {
-      total = await i18n.count().exec().catch(err => ctx.throw(500, err))
-
       res = await i18n.find({}, { _id: 0 })
         .sort('-meta.updateAt')
         .skip((page - 1) * pageSize)
@@ -77,8 +75,6 @@ class i18nController {
         alreadyExist: res
       }
     }
-
-
   }
 
   // 创建新词条
