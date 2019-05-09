@@ -4,11 +4,86 @@ const base64 = require('hi-base64')
 const uuid = require('uuid')
 const mongoose = require('mongoose')
 const events = mongoose.model('events')
+const check = mongoose.model('check')
 const ApiError = require('../../middlewares/ApiError')
 const ApiErrorNames = require('../../middlewares/ApiErrorName')
 const logUtil = require('../../utils/log_util')
 
 class eventsController {
+
+    // 检查event数量
+    static async checklist(ctx, next) {
+      const query = ctx.query
+      const page = Number(query.page || 1)
+      const pageSize = Number(query.pageSize || 10)
+      const start = Number(query.start || 0)
+      const end = Number(query.end || 0)
+      const { mobile } = query
+      let total, res
+      let ex  = {start:{$gte:start}, start:{$lte:end}}
+      if( !mobile ) {
+        if(!start && !end) {
+          ex = {}
+        } else if(start && !end){
+          ex = {start:{$gte:start}}
+        } else if(!start && end){
+          ex = {start:{$lte:end}}
+        } else {
+          ex = {start:{$gte:start}, start:{$lte:end}}
+        }
+      } else if ( mobile ) {
+        if(!start && !end) {
+          ex = {mobile}
+        } else if(start && !end){
+          ex = {mobile, start:{$gte:start}}
+        } else if(!start && end){
+          ex = {mobile, start:{$lte:end}}
+        } else {
+          ex = {mobile, start:{$gte:start}, start:{$lte:end}}
+        }
+      }
+
+      res = await check.find(ex, { _id: 0, id:0, __v:0 })
+      .sort('-meta.createAt')
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec()
+      .catch(err => ctx.throw(500, err))
+
+      ctx.body = {
+        total: res.length,
+        list: res
+      }
+      next()
+    }
+
+  // 检查event数量
+  static async check(ctx, next) {
+    const query = ctx.query
+    const count = Number(query.count || 0)
+    const start = Number(query.start || 0)
+    const end = Number(query.end || 0)
+    const { mobile } = query
+
+    if( !mobile || !count || !start || !end ) {
+      throw new ApiError(ApiErrorNames.PARAMS_NOT_EXIST)
+    } else {
+      let total, ok
+      total = await events.count({mobile, xt:{$gte:start}, xt:{$lte:end}}).exec().catch(err => ctx.throw(500, err))
+      ok = total === count
+      const id = uuid.v4()
+      let item = new check({
+        id, mobile, start, end, total, count, ok
+      })
+      const ret = await item.save()
+
+      ctx.body = {
+        ret
+      }
+    }
+    next()
+  }
+
   // 查询
   static async getList(ctx, next) {
     const query = ctx.query
@@ -17,13 +92,14 @@ class eventsController {
     const { id, mobile } = query
     let total, res
 
+    // id, xmi, partner, origin, appVersion, identity, sourceId, userFlag, mobile, userId, productCode, element
     if (id) {
-      res = await events.findOne({ id }, { _id: 0 })
+      res = await events.findOne({ id }, { _id: 0, identity: 0, partner: 0 , userFlag: 0, __v:0 })
         .catch(err => ctx.throw(500, err))
 
       ctx.body = res
     } else if(mobile) {
-      res = await events.find({mobile}, { _id: 0 })
+      res = await events.find({mobile}, { _id: 0, identity: 0, partner: 0 , userFlag: 0, __v:0 },)
         .sort('-meta.updateAt')
         .skip((page - 1) * pageSize)
         .limit(pageSize)
@@ -35,7 +111,7 @@ class eventsController {
         list: res
       }
     } else {
-      res = await events.find({}, { _id: 0 })
+      res = await events.find({}, { _id: 0, identity: 0, partner: 0 , userFlag: 0, __v:0 })
         .sort('-meta.updateAt')
         .skip((page - 1) * pageSize)
         .limit(pageSize)
@@ -117,12 +193,11 @@ class eventsController {
       // console.log('list element:', e,xt,os_version,os,av,trackId)
       const id = uuid.v4()
       let item = new events({
-        id, e, xt, os_version, os, av, trackId, xmi, partner, origin, appVersion, identity, sourceId, userFlag, mobile, userId, productCode,
-        jsfy: JSON.stringify(element)
+        xt, id, xmi, partner, origin, appVersion, identity, sourceId, userFlag, mobile, userId, productCode, element
       })
       item = await item.save()
       eventArray.push({xmi, trackId, e, xt, os_version, os, av, partner, origin, appVersion, identity, sourceId, userFlag, mobile});
-      logUtil.logEvent({e, xt, os, av, sourceId, appVersion, origin, mobile});
+      logUtil.logEvent({trackId, mobile, origin, appVersion, sourceId, xt, os, av, e });
     }
     // list.forEach(async element  =>  {
     // });
@@ -144,6 +219,33 @@ class eventsController {
       .catch(err => ctx.throw(500, err))
     ctx.body = {
       success: true
+    }
+  }
+
+  // 删除词条
+  static async clear(ctx) {
+    const { mobile } = ctx.query
+    // console.log(`ctx.query:`, ctx.query);
+    // console.log(`ctx.params:`, ctx.params);
+
+    if (!mobile) {
+      const ret = await events.remove({ mobile:{$ne:""} })
+      .exec()
+      .catch(err => ctx.throw(500, err))
+
+      ctx.body = {
+        success: true,
+        ret
+      }
+    } else {
+      const ret = await events.remove({ mobile })
+      .exec()
+      .catch(err => ctx.throw(500, err))
+
+      ctx.body = {
+        ret,
+        success: true
+      }
     }
   }
 }
