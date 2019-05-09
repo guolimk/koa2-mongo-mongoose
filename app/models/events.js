@@ -4,12 +4,12 @@ let mongoose = require('mongoose')
 let Schema = mongoose.Schema
 
 let eventsSchema = new Schema({
-  e: String,
-  xt: String,
-  os_version: String,
-  os: String,
-  av: String,
-  trackId: Number,
+  // e: String,
+  // xt: String,
+  // os_version: String,
+  // os: String,
+  // av: String,
+  // trackId: Number,
   xmi: String,
   partner: String,
   origin: String,
@@ -20,7 +20,7 @@ let eventsSchema = new Schema({
   mobile: String,
   userId: String,
   productCode: String,
-  jsfy: String,
+  element: Object,
   id: String,
   meta: {
     createAt: {

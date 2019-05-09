@@ -30,9 +30,9 @@ var formatReqLog = function (req, resTime) {
 
   // 请求参数
   if (method === 'GET') {
-    logText += '<<<<<< request query:  ' + JSON.stringify(req.query) + '\n'
+    logText += ' request query:  ' + JSON.stringify(req.query) + '\n'
   } else {
-    // logText += '<<<<<< request body: \n' + JSON.stringify(req.body) + '\n'
+    logText += ' request body: \n' + JSON.stringify(req.body) + '\n'
   }
 
   // 服务器响应时间
