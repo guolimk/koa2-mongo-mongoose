@@ -89,29 +89,23 @@ class eventsController {
     const query = ctx.query
     const page = Number(query.page || 1)
     const pageSize = Number(query.pageSize || 10)
-    const { id, mobile } = query
+    const { id, mobile, e } = query
     let total, res
 
-    // id, xmi, partner, origin, appVersion, identity, sourceId, userFlag, mobile, userId, productCode, element
+    // id, xmi, partner, origin, appVersion, identity, sourceId, userFlag, mobile, token, productCode, element
     if (id) {
       res = await events.findOne({ id }, { _id: 0, identity: 0, partner: 0 , userFlag: 0, __v:0 })
         .catch(err => ctx.throw(500, err))
-
       ctx.body = res
-    } else if(mobile) {
-      res = await events.find({mobile}, { _id: 0, identity: 0, partner: 0 , userFlag: 0, __v:0 },)
-        .sort('-meta.updateAt')
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .exec()
-        .catch(err => ctx.throw(500, err))
-
-      ctx.body = {
-        total: res.length,
-        list: res
-      }
     } else {
-      res = await events.find({}, { _id: 0, identity: 0, partner: 0 , userFlag: 0, __v:0 })
+      let ex = {}
+      if(mobile) {
+        ex = !e ? {mobile} : {mobile, e}
+      } else if(!e){
+        ex = {e}
+      }
+
+      res = await events.find(ex, { _id: 0, identity: 0, partner: 0 , userFlag: 0, __v:0 },)
         .sort('-meta.updateAt')
         .skip((page - 1) * pageSize)
         .limit(pageSize)
@@ -166,17 +160,32 @@ class eventsController {
 
     const { list, xmi } = dObj
     const partner = dObj["x-partner-code"]
-    const origin = dObj["x-origin"]
-    const appVersion = dObj["x-app-version"]
-    const identity = dObj["x-user-identity"]
-    const sourceId = dObj["x-source-id"]
-    const userFlag = dObj["x-user-flag"]
-    const mobile = dObj["x-user-mobile"]
-    const userId = dObj["x-user-id"]
-    const productCode = dObj["x-product-code"]
+    const origin = dObj["X-Origin"]
+    const appVersion = dObj["X-App-Version"]
+    const identity = dObj["X-User-Identity"]
+    const sourceId = dObj["X-Source-Id"]
+    const userFlag = dObj["X-User-Flag"]
+    const mobile = dObj["X-User-Mobile"]
+    const token = dObj["X-User-Token"]
+    const productCode = dObj["X-Product-Code"]
+
+
+    // "X-User-Token" : "t2mtrjl33i76hefc5voe73s9lv",
+    // "xmi" : "F8F4E637-C96A-47FC-86F6-252122CDF238",
+    // "X-Product-Code" : "WLD",
+    // "Content-Type" : "application\/json",
+    // "X-User-Flag" : "normal",
+    // "X-User-Mobile" : "13600002277",
+    // "X-User-Identity" : 2,
+    // "X-Origin" : "AppStore",
+    // "x-partner-code" : "wld",
+    // "X-Source-Id" : "3",
+    // "X-App-Version" : "5.2.3",
+    // "Accept" : "application\/json"
+
 
     // console.log(`Request xmi:${xmi}, partner:${partner}, origin:${origin}, appVersion:${appVersion}, identity:${identity}, sourceId:${sourceId}, userFlag:${userFlag}, mobile:${mobile},`)
-    if (!list || !xmi || !partner || !origin || !appVersion || !identity || !sourceId || !userFlag || !mobile || !userId || !productCode) {
+    if (!list || !xmi || !partner || !origin || !appVersion || !identity || !sourceId || !userFlag || !mobile || !token || !productCode) {
       throw new ApiError(ApiErrorNames.PARAMS_NOT_EXIST)
     }
 
@@ -193,7 +202,7 @@ class eventsController {
       // console.log('list element:', e,xt,os_version,os,av,trackId)
       const id = uuid.v4()
       let item = new events({
-        xt, id, xmi, partner, origin, appVersion, identity, sourceId, userFlag, mobile, userId, productCode, element
+        xmi, partner, origin, appVersion, identity, sourceId, userFlag, mobile, token, productCode, id, e, xt, element
       })
       item = await item.save()
       eventArray.push({xmi, trackId, e, xt, os_version, os, av, partner, origin, appVersion, identity, sourceId, userFlag, mobile});
